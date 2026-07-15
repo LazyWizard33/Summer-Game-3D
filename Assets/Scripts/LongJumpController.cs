@@ -28,7 +28,7 @@ public class LongJumpController : MonoBehaviour
 
     public event Action OnTakeoffWindowOpen;
     public event Action<bool> OnJumpResult; // true = valid jump, false = foul
-    public event Action<float> OnLandingResult; // final distance
+    public event Action<float> OnLandingResult; // final MEASURED distance (from foul line)
 
     void Update()
     {
@@ -71,8 +71,10 @@ public class LongJumpController : MonoBehaviour
         hasJumped = true;
         OnJumpResult?.Invoke(true);
 
-        float distance = CalculateJumpDistance();
-        StartCoroutine(JumpArc(distance));
+        float takeoffZ = transform.position.z; // NEW — remember exactly where takeoff happened
+        float jumpPower = CalculateJumpDistance(); // raw jump power, not the final measured score
+
+        StartCoroutine(JumpArc(takeoffZ, jumpPower)); // CHANGED — pass takeoffZ along
     }
 
     float CalculateJumpDistance()
@@ -95,10 +97,10 @@ public class LongJumpController : MonoBehaviour
         }
     }
 
-    IEnumerator JumpArc(float distance)
+    IEnumerator JumpArc(float takeoffZ, float jumpPower) // CHANGED — now takes takeoffZ too
     {
         Vector3 startPos = transform.position;
-        Vector3 endPos = startPos + new Vector3(0, 0, distance);
+        Vector3 endPos = startPos + new Vector3(0, 0, jumpPower);
 
         float elapsed = 0f;
 
@@ -107,16 +109,20 @@ public class LongJumpController : MonoBehaviour
             elapsed += Time.deltaTime;
             float t = Mathf.Clamp01(elapsed / jumpDuration);
 
-            float x = Mathf.Lerp(startPos.z, endPos.z, t);
+            float z = Mathf.Lerp(startPos.z, endPos.z, t);
             float heightArc = jumpHeight * 4f * t * (1f - t); // simple parabola, peaks at t=0.5
 
-            transform.position = new Vector3(startPos.x, startPos.y + heightArc, x);
+            transform.position = new Vector3(startPos.x, startPos.y + heightArc, z);
             yield return null;
         }
 
         transform.position = endPos; // snap exactly to final landing spot
 
-        OnLandingResult?.Invoke(distance);
+        // NEW — actual measured/reported distance is landing position minus the foul line,
+        // NOT the raw jumpPower. Taking off earlier than the line costs you distance.
+        float measuredDistance = Mathf.Max(0f, endPos.z - foulLineZ); // clamped so it can't show negative
+
+        OnLandingResult?.Invoke(measuredDistance);
     }
 
     void OnEnable()

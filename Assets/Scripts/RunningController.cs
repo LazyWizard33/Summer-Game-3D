@@ -52,6 +52,7 @@ public class RunningController : MonoBehaviour
     public event Action<bool, TapSide> OnTapResult;
     public event Action<float> OnRaceFinished;
     public event Action OnRunningFrozen;
+    public event Action OnRunningUnfrozen;
 
     void Awake()
     {
@@ -127,6 +128,14 @@ public class RunningController : MonoBehaviour
         if (inputFrozen) return;
         inputFrozen = true;
         OnRunningFrozen?.Invoke();
+    }
+
+    public void UnfreezeRunningInput()
+    {
+        if (!inputFrozen) return;
+        inputFrozen = false;
+        PickNewPrompt(); // show a fresh dot prompt immediately as running resumes
+        OnRunningUnfrozen?.Invoke();
     }
 
     public void OnLeftTap() => HandleTap(TapSide.Left);
