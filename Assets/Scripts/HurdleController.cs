@@ -1,6 +1,5 @@
 using System;
 using System.Collections;
-using System.Collections.Generic;
 using UnityEngine;
 
 public class HurdleController : MonoBehaviour
@@ -13,21 +12,19 @@ public class HurdleController : MonoBehaviour
 
     [Header("Timing")]
     public float approachWindowSeconds = 1.5f;
-    public int sequenceLength = 3;
 
     [Header("Penalty / Jump")]
-    public float wrongSequencePenalty = 2.5f;
+    public float wrongTapPenalty = 2f;
+    public float missedHurdlePenalty = 2.5f; // if you never tap in time
     public float jumpHopHeight = 0.6f;
     public float jumpHopDuration = 0.35f;
 
     private int nextHurdleIndex = 0;
-    private bool inSequenceMode = false;
-    private List<TapSide> currentSequence = new List<TapSide>(); // CHANGED — reuses TapSide, not a new enum
-    private int currentInputIndex = 0;
+    private bool inChoiceMode = false;
     private bool hurdleResultPending = false;
+    private TapSide jumpSide; // which side is the correct button this time
 
-    public event Action<List<TapSide>> OnSequenceGenerated;
-    public event Action<int, bool> OnInputProgress;
+    public event Action<TapSide> OnHurdleChoiceShown; // tells UI which side is the real Jump button
     public event Action<int> OnHurdleCleared;
     public event Action<int> OnHurdleFailed;
     public event Action OnAllHurdlesComplete;
@@ -40,78 +37,62 @@ public class HurdleController : MonoBehaviour
         float targetZ = hurdleZPositions[nextHurdleIndex];
         float speed = runningController.currentSpeed;
 
-        if (!inSequenceMode && !hurdleResultPending && speed > 0.1f)
+        if (!inChoiceMode && !hurdleResultPending && speed > 0.1f)
         {
             float timeRemaining = (targetZ - z) / speed;
             if (timeRemaining <= approachWindowSeconds)
             {
-                StartHurdleSequence();
+                ShowHurdleChoice();
             }
         }
 
-        if (inSequenceMode && z >= targetZ)
+        // Reached the hurdle without picking anything — automatic fail
+        if (inChoiceMode && z >= targetZ)
         {
             FailHurdle();
         }
 
-        // Same keys as your existing running controls — no new bindings needed
-        if (Input.GetKeyDown(KeyCode.Keypad4)) OnTapSide(TapSide.Left);  // Green
-        if (Input.GetKeyDown(KeyCode.Keypad6)) OnTapSide(TapSide.Right); // Blue
+        if (Input.GetKeyDown(KeyCode.Keypad4)) OnTapSide(TapSide.Left);
+        if (Input.GetKeyDown(KeyCode.Keypad6)) OnTapSide(TapSide.Right);
     }
 
-    void StartHurdleSequence()
+    void ShowHurdleChoice()
     {
-        inSequenceMode = true;
-        currentInputIndex = 0;
-        currentSequence.Clear();
-
-        for (int i = 0; i < sequenceLength; i++)
-        {
-            currentSequence.Add(UnityEngine.Random.value < 0.5f ? TapSide.Left : TapSide.Right);
-        }
+        inChoiceMode = true;
+        jumpSide = UnityEngine.Random.value < 0.5f ? TapSide.Left : TapSide.Right;
 
         runningController.FreezeRunningInput();
-        OnSequenceGenerated?.Invoke(currentSequence);
+        OnHurdleChoiceShown?.Invoke(jumpSide);
     }
 
     public void OnTapSide(TapSide tapped)
     {
-        if (!inSequenceMode) return;
+        if (!inChoiceMode) return;
 
-        bool correct = tapped == currentSequence[currentInputIndex];
-        OnInputProgress?.Invoke(currentInputIndex, correct);
-
-        if (!correct)
-        {
-            FailHurdle();
-            return;
-        }
-
-        currentInputIndex++;
-
-        if (currentInputIndex >= currentSequence.Count)
-        {
-            ClearHurdle();
-        }
-    }
-
-    // Call these from your EXISTING LeftTapZone / RightTapZone buttons
-    public void OnLeftTap() => OnTapSide(TapSide.Left);   // Green
-    public void OnRightTap() => OnTapSide(TapSide.Right); // Blue
-
-    void ClearHurdle()
-    {
-        inSequenceMode = false;
+        inChoiceMode = false;
         hurdleResultPending = true;
-        StartCoroutine(HopThenContinue(true));
-        OnHurdleCleared?.Invoke(nextHurdleIndex);
+
+        if (tapped == jumpSide)
+        {
+            StartCoroutine(HopThenContinue(true));
+            OnHurdleCleared?.Invoke(nextHurdleIndex);
+        }
+        else
+        {
+            runningController.currentSpeed = Mathf.Max(0f, runningController.currentSpeed - wrongTapPenalty);
+            StartCoroutine(HopThenContinue(false));
+            OnHurdleFailed?.Invoke(nextHurdleIndex);
+        }
     }
+
+    public void OnLeftTap() => OnTapSide(TapSide.Left);
+    public void OnRightTap() => OnTapSide(TapSide.Right);
 
     void FailHurdle()
     {
-        inSequenceMode = false;
+        inChoiceMode = false;
         hurdleResultPending = true;
-        runningController.currentSpeed = Mathf.Max(0f, runningController.currentSpeed - wrongSequencePenalty);
+        runningController.currentSpeed = Mathf.Max(0f, runningController.currentSpeed - missedHurdlePenalty);
         StartCoroutine(HopThenContinue(false));
         OnHurdleFailed?.Invoke(nextHurdleIndex);
     }
@@ -120,7 +101,7 @@ public class HurdleController : MonoBehaviour
     {
         Vector3 startPos = transform.position;
         float duration = success ? jumpHopDuration : jumpHopDuration * 0.6f;
-        float height = success ? jumpHopHeight : 0.15f;
+        float height = success ? jumpHopHeight : 0.1f;
 
         float elapsed = 0f;
         while (elapsed < duration)
