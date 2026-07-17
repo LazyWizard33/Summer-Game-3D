@@ -1,4 +1,4 @@
-using System;
+﻿using System;
 using System.Collections;
 using UnityEngine;
 
@@ -8,26 +8,42 @@ public class HurdleController : MonoBehaviour
     public RunningController runningController;
 
     [Header("Hurdle Layout")]
-    public float[] hurdleZPositions = { 15f, 25f, 35f, 45f, 55f };
+    public int hurdleCount = 5;
+    public float hurdleGap = 18f;
+    private float[] hurdleZPositions;
+    private float startZ;
 
     [Header("Timing")]
-    public float approachWindowSeconds = 1.5f;
+    public float stopRunningWindowSeconds = 2f; // NEW — dots stop this many seconds before the hurdle
+    public float choiceWindowSeconds = 1f;      // NEW — jump/fake icons appear this many seconds before the hurdle
 
     [Header("Penalty / Jump")]
     public float wrongTapPenalty = 2f;
-    public float missedHurdlePenalty = 2.5f; // if you never tap in time
+    public float missedHurdlePenalty = 2.5f;
     public float jumpHopHeight = 0.6f;
     public float jumpHopDuration = 0.35f;
 
     private int nextHurdleIndex = 0;
-    private bool inChoiceMode = false;
+    private bool hasFrozenForThisHurdle = false; // NEW — tracks stage 1 (dots stopped)
+    private bool inChoiceMode = false;            // stage 2 (icons showing)
     private bool hurdleResultPending = false;
-    private TapSide jumpSide; // which side is the correct button this time
+    private TapSide jumpSide;
 
-    public event Action<TapSide> OnHurdleChoiceShown; // tells UI which side is the real Jump button
+    public event Action<TapSide> OnHurdleChoiceShown;
     public event Action<int> OnHurdleCleared;
     public event Action<int> OnHurdleFailed;
     public event Action OnAllHurdlesComplete;
+
+    void Awake()
+    {
+        startZ = transform.position.z;
+
+        hurdleZPositions = new float[hurdleCount];
+        for (int i = 0; i < hurdleCount; i++)
+        {
+            hurdleZPositions[i] = startZ + hurdleGap * (i + 1);
+        }
+    }
 
     void Update()
     {
@@ -37,16 +53,25 @@ public class HurdleController : MonoBehaviour
         float targetZ = hurdleZPositions[nextHurdleIndex];
         float speed = runningController.currentSpeed;
 
-        if (!inChoiceMode && !hurdleResultPending && speed > 0.1f)
+        if (!hurdleResultPending && speed > 0.1f)
         {
             float timeRemaining = (targetZ - z) / speed;
-            if (timeRemaining <= approachWindowSeconds)
+
+            // Stage 1 — stop the running dots first, no icons yet
+            if (!hasFrozenForThisHurdle && timeRemaining <= stopRunningWindowSeconds)
+            {
+                hasFrozenForThisHurdle = true;
+                runningController.FreezeRunningInput();
+            }
+
+            // Stage 2 — now show the Jump/Fake icons
+            if (hasFrozenForThisHurdle && !inChoiceMode && timeRemaining <= choiceWindowSeconds)
             {
                 ShowHurdleChoice();
             }
         }
 
-        // Reached the hurdle without picking anything � automatic fail
+        // Reached the hurdle without picking anything — automatic fail
         if (inChoiceMode && z >= targetZ)
         {
             FailHurdle();
@@ -61,8 +86,7 @@ public class HurdleController : MonoBehaviour
         inChoiceMode = true;
         jumpSide = UnityEngine.Random.value < 0.5f ? TapSide.Left : TapSide.Right;
 
-        runningController.FreezeRunningInput();
-        OnHurdleChoiceShown?.Invoke(jumpSide);
+        OnHurdleChoiceShown?.Invoke(jumpSide); // running is already frozen from Stage 1
     }
 
     public void OnTapSide(TapSide tapped)
@@ -117,6 +141,7 @@ public class HurdleController : MonoBehaviour
 
         nextHurdleIndex++;
         hurdleResultPending = false;
+        hasFrozenForThisHurdle = false; // NEW — reset for the next hurdle
 
         if (nextHurdleIndex >= hurdleZPositions.Length)
             OnAllHurdlesComplete?.Invoke();

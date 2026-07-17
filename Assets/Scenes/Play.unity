@@ -338,7 +338,7 @@ Transform:
   m_GameObject: {fileID: 50298505}
   serializedVersion: 2
   m_LocalRotation: {x: 0, y: 0, z: 0, w: 1}
-  m_LocalPosition: {x: 60, y: 0.15, z: 35}
+  m_LocalPosition: {x: 60, y: 0.15, z: 99}
   m_LocalScale: {x: 0.3, y: 0.3, z: 0.05}
   m_ConstrainProportionsScale: 0
   m_Children: []
@@ -1727,7 +1727,7 @@ Transform:
   m_GameObject: {fileID: 608477356}
   serializedVersion: 2
   m_LocalRotation: {x: 0, y: 0, z: 0, w: 1}
-  m_LocalPosition: {x: 60, y: 0.15, z: 15}
+  m_LocalPosition: {x: 60, y: 0.15, z: 27}
   m_LocalScale: {x: 0.3, y: 0.3, z: 0.05}
   m_ConstrainProportionsScale: 0
   m_Children: []
@@ -2159,7 +2159,6 @@ GameObject:
   - component: {fileID: 736279890}
   - component: {fileID: 736279889}
   - component: {fileID: 736279895}
-  - component: {fileID: 736279896}
   m_Layer: 0
   m_Name: HurdlePlayer
   m_TagString: Untagged
@@ -2180,20 +2179,20 @@ MonoBehaviour:
   m_Name: 
   m_EditorClassIdentifier: Assembly-CSharp::RunningController
   raceStarted: 0
-  targetFinishTime: 13.3
-  bestFinishTime: 9
+  targetFinishTime: 22
+  bestFinishTime: 17
   perfectTapWindow: 0.15
   maxTapWindow: 0.6
   currentSpeed: 0
   speedDecayPerSecond: 0.6
   wrongTapPenalty: 4
   speedHeadroom: 1.06
-  useRampSystem: 0
+  useRampSystem: 1
   fastTapThreshold: 0.45
   rampIncreasePerFastTap: 0.35
   rampDecreasePerSlowTap: 0.12
   rampDecayPerSecond: 0.15
-  raceDistance: 65
+  raceDistance: 200
   distanceTravelled: 0
 --- !u!54 &736279890
 Rigidbody:
@@ -2330,49 +2329,14 @@ MonoBehaviour:
   m_Name: 
   m_EditorClassIdentifier: Assembly-CSharp::HurdleController
   runningController: {fileID: 736279889}
-  hurdleZPositions:
-  - 15
-  - 25
-  - 35
-  - 45
-  - 55
-  approachWindowSeconds: 1.5
+  hurdleCount: 5
+  hurdleGap: 36
+  stopRunningWindowSeconds: 1
+  choiceWindowSeconds: 0.5
   wrongTapPenalty: 1
   missedHurdlePenalty: 2.5
   jumpHopHeight: 0.6
   jumpHopDuration: 0.35
---- !u!114 &736279896
-MonoBehaviour:
-  m_ObjectHideFlags: 0
-  m_CorrespondingSourceObject: {fileID: 0}
-  m_PrefabInstance: {fileID: 0}
-  m_PrefabAsset: {fileID: 0}
-  m_GameObject: {fileID: 736279888}
-  m_Enabled: 1
-  m_EditorHideFlags: 0
-  m_Script: {fileID: 11500000, guid: 6eaf65c5078defb4f83d806a7de1293e, type: 3}
-  m_Name: 
-  m_EditorClassIdentifier: Assembly-CSharp::HurdleSequenceDisplay
-  hurdleController: {fileID: 736279895}
-  sequenceSlots:
-  - {fileID: 0}
-  - {fileID: 0}
-  - {fileID: 0}
-  crossMarks:
-  - {fileID: 0}
-  - {fileID: 0}
-  - {fileID: 0}
-  crossDisplayDuration: 0.3
-  greenColor:
-    r: 0
-    g: 0.49823856
-    b: 1
-    a: 1
-  blueColor:
-    r: 0
-    g: 1
-    b: 0.33761287
-    a: 1
 --- !u!1 &745291336
 GameObject:
   m_ObjectHideFlags: 0
@@ -2479,7 +2443,7 @@ Transform:
   m_GameObject: {fileID: 745291336}
   serializedVersion: 2
   m_LocalRotation: {x: 0, y: 0, z: 0, w: 1}
-  m_LocalPosition: {x: 60, y: 0.15, z: 45}
+  m_LocalPosition: {x: 60, y: 0.15, z: 135}
   m_LocalScale: {x: 0.3, y: 0.3, z: 0.05}
   m_ConstrainProportionsScale: 0
   m_Children: []
@@ -2591,7 +2555,7 @@ Transform:
   m_GameObject: {fileID: 792022311}
   serializedVersion: 2
   m_LocalRotation: {x: 0, y: 0, z: 0, w: 1}
-  m_LocalPosition: {x: 60, y: 0.15, z: 25}
+  m_LocalPosition: {x: 60, y: 0.15, z: 63}
   m_LocalScale: {x: 0.3, y: 0.3, z: 0.05}
   m_ConstrainProportionsScale: 0
   m_Children: []
@@ -4149,8 +4113,8 @@ Transform:
   m_GameObject: {fileID: 1116312477}
   serializedVersion: 2
   m_LocalRotation: {x: 0, y: 0, z: 0, w: 1}
-  m_LocalPosition: {x: 60, y: 0, z: 30}
-  m_LocalScale: {x: 0.3, y: 1, z: -9}
+  m_LocalPosition: {x: 60, y: -0, z: 91.126}
+  m_LocalScale: {x: 0.3, y: 1, z: -21.225533}
   m_ConstrainProportionsScale: 0
   m_Children: []
   m_Father: {fileID: 0}
@@ -5302,7 +5266,7 @@ Transform:
   m_GameObject: {fileID: 1613589247}
   serializedVersion: 2
   m_LocalRotation: {x: 0, y: 0, z: 0, w: 1}
-  m_LocalPosition: {x: 60, y: 0.15, z: 55}
+  m_LocalPosition: {x: 60, y: 0.15, z: 171}
   m_LocalScale: {x: 0.3, y: 0.3, z: 0.05}
   m_ConstrainProportionsScale: 0
   m_Children: []
