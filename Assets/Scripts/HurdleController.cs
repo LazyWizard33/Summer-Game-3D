@@ -14,8 +14,9 @@ public class HurdleController : MonoBehaviour
     private float startZ;
 
     [Header("Timing")]
-    public float stopRunningWindowSeconds = 2f; // NEW — dots stop this many seconds before the hurdle
-    public float choiceWindowSeconds = 1f;      // NEW — jump/fake icons appear this many seconds before the hurdle
+    public float stopRunningWindowSeconds = 2f; // dots stop this many seconds before the hurdle
+    public float choiceWindowSeconds = .5f;      // jump/fake icons appear this many seconds before the hurdle
+    public float reactionTimeLimit = 1f;        // NEW — max time allowed to tap once choice appears
 
     [Header("Penalty / Jump")]
     public float wrongTapPenalty = 2f;
@@ -24,10 +25,11 @@ public class HurdleController : MonoBehaviour
     public float jumpHopDuration = 0.35f;
 
     private int nextHurdleIndex = 0;
-    private bool hasFrozenForThisHurdle = false; // NEW — tracks stage 1 (dots stopped)
-    private bool inChoiceMode = false;            // stage 2 (icons showing)
+    private bool hasFrozenForThisHurdle = false; // tracks stage 1 (dots stopped)
+    private bool inChoiceMode = false;             // stage 2 (icons showing)
     private bool hurdleResultPending = false;
     private TapSide jumpSide;
+    private float choiceStartTime; // NEW — tracks when the choice icons appeared
 
     public event Action<TapSide> OnHurdleChoiceShown;
     public event Action<int> OnHurdleCleared;
@@ -45,6 +47,20 @@ public class HurdleController : MonoBehaviour
         }
     }
 
+    void OnEnable()
+    {
+        OnHurdleCleared += LogHurdleCleared;
+        OnHurdleFailed += LogHurdleFailed;
+        OnAllHurdlesComplete += LogAllComplete;
+    }
+
+    void OnDisable()
+    {
+        OnHurdleCleared -= LogHurdleCleared;
+        OnHurdleFailed -= LogHurdleFailed;
+        OnAllHurdlesComplete -= LogAllComplete;
+    }
+
     void Update()
     {
         if (nextHurdleIndex >= hurdleZPositions.Length) return;
@@ -57,22 +73,20 @@ public class HurdleController : MonoBehaviour
         {
             float timeRemaining = (targetZ - z) / speed;
 
-            // Stage 1 — stop the running dots first, no icons yet
             if (!hasFrozenForThisHurdle && timeRemaining <= stopRunningWindowSeconds)
             {
                 hasFrozenForThisHurdle = true;
                 runningController.FreezeRunningInput();
             }
 
-            // Stage 2 — now show the Jump/Fake icons
             if (hasFrozenForThisHurdle && !inChoiceMode && timeRemaining <= choiceWindowSeconds)
             {
                 ShowHurdleChoice();
             }
         }
 
-        // Reached the hurdle without picking anything — automatic fail
-        if (inChoiceMode && z >= targetZ)
+        // CHANGED — fail based on elapsed time since choice appeared, not physical position
+        if (inChoiceMode && Time.time - choiceStartTime >= reactionTimeLimit)
         {
             FailHurdle();
         }
@@ -85,8 +99,9 @@ public class HurdleController : MonoBehaviour
     {
         inChoiceMode = true;
         jumpSide = UnityEngine.Random.value < 0.5f ? TapSide.Left : TapSide.Right;
+        choiceStartTime = Time.time; // NEW
 
-        OnHurdleChoiceShown?.Invoke(jumpSide); // running is already frozen from Stage 1
+        OnHurdleChoiceShown?.Invoke(jumpSide);
     }
 
     public void OnTapSide(TapSide tapped)
@@ -103,7 +118,7 @@ public class HurdleController : MonoBehaviour
         }
         else
         {
-            runningController.currentSpeed = Mathf.Max(0f, runningController.currentSpeed - wrongTapPenalty);
+            runningController.currentSpeed = Mathf.Max(runningController.minimumSpeed, runningController.currentSpeed - wrongTapPenalty);
             StartCoroutine(HopThenContinue(false));
             OnHurdleFailed?.Invoke(nextHurdleIndex);
         }
@@ -116,7 +131,7 @@ public class HurdleController : MonoBehaviour
     {
         inChoiceMode = false;
         hurdleResultPending = true;
-        runningController.currentSpeed = Mathf.Max(0f, runningController.currentSpeed - missedHurdlePenalty);
+        runningController.currentSpeed = Mathf.Max(runningController.minimumSpeed, runningController.currentSpeed - missedHurdlePenalty);
         StartCoroutine(HopThenContinue(false));
         OnHurdleFailed?.Invoke(nextHurdleIndex);
     }
@@ -141,11 +156,26 @@ public class HurdleController : MonoBehaviour
 
         nextHurdleIndex++;
         hurdleResultPending = false;
-        hasFrozenForThisHurdle = false; // NEW — reset for the next hurdle
+        hasFrozenForThisHurdle = false;
 
         if (nextHurdleIndex >= hurdleZPositions.Length)
             OnAllHurdlesComplete?.Invoke();
-        else
-            runningController.UnfreezeRunningInput();
+
+        runningController.UnfreezeRunningInput();
+    }
+
+    void LogHurdleCleared(int index)
+    {
+        Debug.Log($"Hurdle {index + 1}: JUMPED correctly!");
+    }
+
+    void LogHurdleFailed(int index)
+    {
+        Debug.Log($"Hurdle {index + 1}: FAILED — wrong tap or missed the window.");
+    }
+
+    void LogAllComplete()
+    {
+        Debug.Log("All hurdles complete!");
     }
 }

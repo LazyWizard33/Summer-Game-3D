@@ -266,7 +266,7 @@ BoxCollider:
     serializedVersion: 2
     m_Bits: 0
   m_LayerOverridePriority: 0
-  m_IsTrigger: 0
+  m_IsTrigger: 1
   m_ProvidesContacts: 0
   m_Enabled: 1
   serializedVersion: 3
@@ -338,8 +338,8 @@ Transform:
   m_GameObject: {fileID: 50298505}
   serializedVersion: 2
   m_LocalRotation: {x: 0, y: 0, z: 0, w: 1}
-  m_LocalPosition: {x: 60, y: 0.15, z: 99}
-  m_LocalScale: {x: 0.3, y: 0.3, z: 0.05}
+  m_LocalPosition: {x: 60, y: 0.36, z: 99}
+  m_LocalScale: {x: 3, y: 0.71, z: 0.05}
   m_ConstrainProportionsScale: 0
   m_Children: []
   m_Father: {fileID: 0}
@@ -1655,7 +1655,7 @@ BoxCollider:
     serializedVersion: 2
     m_Bits: 0
   m_LayerOverridePriority: 0
-  m_IsTrigger: 0
+  m_IsTrigger: 1
   m_ProvidesContacts: 0
   m_Enabled: 1
   serializedVersion: 3
@@ -1727,8 +1727,8 @@ Transform:
   m_GameObject: {fileID: 608477356}
   serializedVersion: 2
   m_LocalRotation: {x: 0, y: 0, z: 0, w: 1}
-  m_LocalPosition: {x: 60, y: 0.15, z: 27}
-  m_LocalScale: {x: 0.3, y: 0.3, z: 0.05}
+  m_LocalPosition: {x: 60, y: 0.36, z: 27}
+  m_LocalScale: {x: 3, y: 0.71, z: 0.05}
   m_ConstrainProportionsScale: 0
   m_Children: []
   m_Father: {fileID: 0}
@@ -2183,11 +2183,12 @@ MonoBehaviour:
   bestFinishTime: 17
   perfectTapWindow: 0.15
   maxTapWindow: 0.6
-  currentSpeed: 0
+  currentSpeed: 2
   speedDecayPerSecond: 0.6
   wrongTapPenalty: 4
   speedHeadroom: 1.06
-  useRampSystem: 1
+  minimumSpeed: 2
+  useRampSystem: 0
   fastTapThreshold: 0.45
   rampIncreasePerFastTap: 0.35
   rampDecreasePerSlowTap: 0.12
@@ -2333,10 +2334,11 @@ MonoBehaviour:
   hurdleGap: 36
   stopRunningWindowSeconds: 1
   choiceWindowSeconds: 0.5
-  wrongTapPenalty: 1
-  missedHurdlePenalty: 2.5
-  jumpHopHeight: 0.6
-  jumpHopDuration: 0.35
+  reactionTimeLimit: 0.5
+  wrongTapPenalty: 4
+  missedHurdlePenalty: 6
+  jumpHopHeight: 2
+  jumpHopDuration: 0.5
 --- !u!1 &745291336
 GameObject:
   m_ObjectHideFlags: 0
@@ -2371,7 +2373,7 @@ BoxCollider:
     serializedVersion: 2
     m_Bits: 0
   m_LayerOverridePriority: 0
-  m_IsTrigger: 0
+  m_IsTrigger: 1
   m_ProvidesContacts: 0
   m_Enabled: 1
   serializedVersion: 3
@@ -2443,8 +2445,8 @@ Transform:
   m_GameObject: {fileID: 745291336}
   serializedVersion: 2
   m_LocalRotation: {x: 0, y: 0, z: 0, w: 1}
-  m_LocalPosition: {x: 60, y: 0.15, z: 135}
-  m_LocalScale: {x: 0.3, y: 0.3, z: 0.05}
+  m_LocalPosition: {x: 60, y: 0.36, z: 135}
+  m_LocalScale: {x: 3, y: 0.71, z: 0.05}
   m_ConstrainProportionsScale: 0
   m_Children: []
   m_Father: {fileID: 0}
@@ -2483,7 +2485,7 @@ BoxCollider:
     serializedVersion: 2
     m_Bits: 0
   m_LayerOverridePriority: 0
-  m_IsTrigger: 0
+  m_IsTrigger: 1
   m_ProvidesContacts: 0
   m_Enabled: 1
   serializedVersion: 3
@@ -2555,8 +2557,8 @@ Transform:
   m_GameObject: {fileID: 792022311}
   serializedVersion: 2
   m_LocalRotation: {x: 0, y: 0, z: 0, w: 1}
-  m_LocalPosition: {x: 60, y: 0.15, z: 63}
-  m_LocalScale: {x: 0.3, y: 0.3, z: 0.05}
+  m_LocalPosition: {x: 60, y: 0.36, z: 63}
+  m_LocalScale: {x: 3, y: 0.71, z: 0.05}
   m_ConstrainProportionsScale: 0
   m_Children: []
   m_Father: {fileID: 0}
@@ -3332,6 +3334,7 @@ GameObject:
   - component: {fileID: 973764860}
   - component: {fileID: 973764862}
   - component: {fileID: 973764863}
+  - component: {fileID: 973764864}
   m_Layer: 5
   m_Name: Canvas
   m_TagString: Untagged
@@ -3485,6 +3488,7 @@ MonoBehaviour:
   runningController: {fileID: 1773032925}
   liveTimerText: {fileID: 1493941814}
   resultText: {fileID: 1878960951}
+  highScoreKey: 100mRush_BestTime
 --- !u!114 &973764858
 MonoBehaviour:
   m_ObjectHideFlags: 0
@@ -3590,6 +3594,22 @@ MonoBehaviour:
   wrongMarkDuration: 0.3
   spawnDropOffset: 300
   spawnAnimDuration: 0.12
+--- !u!114 &973764864
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 973764850}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 8938c4053ad6974458e75627f050736f, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: Assembly-CSharp::RaceHUD
+  runningController: {fileID: 736279889}
+  liveTimerText: {fileID: 1493941814}
+  resultText: {fileID: 1878960951}
+  highScoreKey: Hurdle_BestTime
 --- !u!1 &1034840766
 GameObject:
   m_ObjectHideFlags: 0
@@ -3853,10 +3873,11 @@ MonoBehaviour:
   bestFinishTime: 6
   perfectTapWindow: 0.15
   maxTapWindow: 0.6
-  currentSpeed: 0
+  currentSpeed: 2
   speedDecayPerSecond: 0.6
   wrongTapPenalty: 4
   speedHeadroom: 1.06
+  minimumSpeed: 2
   useRampSystem: 0
   fastTapThreshold: 0.45
   rampIncreasePerFastTap: 0.35
@@ -5194,7 +5215,7 @@ BoxCollider:
     serializedVersion: 2
     m_Bits: 0
   m_LayerOverridePriority: 0
-  m_IsTrigger: 0
+  m_IsTrigger: 1
   m_ProvidesContacts: 0
   m_Enabled: 1
   serializedVersion: 3
@@ -5266,8 +5287,8 @@ Transform:
   m_GameObject: {fileID: 1613589247}
   serializedVersion: 2
   m_LocalRotation: {x: 0, y: 0, z: 0, w: 1}
-  m_LocalPosition: {x: 60, y: 0.15, z: 171}
-  m_LocalScale: {x: 0.3, y: 0.3, z: 0.05}
+  m_LocalPosition: {x: 60, y: 0.36, z: 171}
+  m_LocalScale: {x: 3, y: 0.71, z: 0.05}
   m_ConstrainProportionsScale: 0
   m_Children: []
   m_Father: {fileID: 0}
@@ -5825,10 +5846,11 @@ MonoBehaviour:
   bestFinishTime: 9
   perfectTapWindow: 0.15
   maxTapWindow: 0.6
-  currentSpeed: 0
+  currentSpeed: 2
   speedDecayPerSecond: 0.6
   wrongTapPenalty: 4
   speedHeadroom: 1.06
+  minimumSpeed: 2
   useRampSystem: 0
   fastTapThreshold: 0.45
   rampIncreasePerFastTap: 0.35

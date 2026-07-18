@@ -26,9 +26,10 @@ public class RunningController : MonoBehaviour
     public float speedDecayPerSecond = 0.6f;
     public float wrongTapPenalty = 2f;
     public float speedHeadroom = 0.5f; // only used when useRampSystem is OFF (100m Rush behavior)
+    public float minimumSpeed = 2f; // NEW — player can never drop below this once moving
 
-    [Header("Speed Ramp System (used for Long Jump / other build-up events)")] // NEW SECTION
-    public bool useRampSystem = false; // NEW — false = old 100m behavior, true = ramp-based build-up
+    [Header("Speed Ramp System (used for Long Jump / other build-up events)")]
+    public bool useRampSystem = false; // false = old 100m behavior, true = ramp-based build-up
     [Range(0f, 1f)] public float fastTapThreshold = 0.45f;
     public float rampIncreasePerFastTap = 0.35f;
     public float rampDecreasePerSlowTap = 0.12f;
@@ -58,7 +59,6 @@ public class RunningController : MonoBehaviour
     {
         baseSpeed = raceDistance / targetFinishTime;
 
-        // CHANGED — headroom only applies in the old (non-ramp) mode, so Long Jump isn't affected by it
         maxSpeed = useRampSystem
             ? raceDistance / bestFinishTime
             : (raceDistance / bestFinishTime) * speedHeadroom;
@@ -82,15 +82,15 @@ public class RunningController : MonoBehaviour
             {
                 if (useRampSystem)
                 {
-                    // NEW — ramp mode: speed decays via rampT drifting back toward 0 (baseSpeed)
                     rampT = Mathf.Max(0f, rampT - rampDecayPerSecond * Time.deltaTime);
                     currentSpeed = Mathf.Lerp(baseSpeed, maxSpeed, rampT);
                 }
                 else if (currentSpeed > baseSpeed)
                 {
-                    // UNCHANGED — original 100m decay behavior
                     currentSpeed = Mathf.Max(baseSpeed, currentSpeed - speedDecayPerSecond * Time.deltaTime);
                 }
+
+                currentSpeed = Mathf.Max(currentSpeed, minimumSpeed); // NEW — enforce floor after any decay
             }
 
             distanceTravelled += currentSpeed * Time.deltaTime;
@@ -113,11 +113,11 @@ public class RunningController : MonoBehaviour
     public void StartRace()
     {
         raceStarted = true;
-        hasStartedMoving = false;
+        hasStartedMoving = true; // CHANGED — was false; now starts moving immediately on GO
         raceTimer = 0f;
         distanceTravelled = 0f;
-        currentSpeed = 0f;
-        rampT = 0f; // NEW — reset ramp progress
+        currentSpeed = minimumSpeed; // CHANGED — was 0; now starts at the speed floor instead of standing still
+        rampT = 0f;
         consecutiveSameSideCount = 0;
         inputFrozen = false;
         PickNewPrompt();
@@ -134,7 +134,7 @@ public class RunningController : MonoBehaviour
     {
         if (!inputFrozen) return;
         inputFrozen = false;
-        PickNewPrompt(); // show a fresh dot prompt immediately as running resumes
+        PickNewPrompt();
         OnRunningUnfrozen?.Invoke();
     }
 
@@ -160,7 +160,6 @@ public class RunningController : MonoBehaviour
 
             if (useRampSystem)
             {
-                // NEW — ramp mode: fast taps build up, slow taps set back
                 if (t >= fastTapThreshold)
                     rampT = Mathf.Clamp01(rampT + rampIncreasePerFastTap);
                 else
@@ -170,12 +169,12 @@ public class RunningController : MonoBehaviour
             }
             else
             {
-                // UNCHANGED — original 100m tap-speed behavior
                 float targetSpeed = Mathf.Lerp(baseSpeed, maxSpeed, t);
                 currentSpeed = Mathf.Max(currentSpeed, targetSpeed);
                 currentSpeed = Mathf.Min(currentSpeed, maxSpeed);
             }
 
+            currentSpeed = Mathf.Max(currentSpeed, minimumSpeed); // NEW — enforce floor here too
             OnTapResult?.Invoke(true, tappedSide);
             PickNewPrompt();
         }
@@ -188,10 +187,10 @@ public class RunningController : MonoBehaviour
             }
             else
             {
-                // UNCHANGED — original 100m wrong-tap behavior
                 currentSpeed = Mathf.Max(0, currentSpeed - wrongTapPenalty);
             }
 
+            currentSpeed = Mathf.Max(currentSpeed, minimumSpeed); // NEW — enforce floor after wrong-tap penalty
             OnTapResult?.Invoke(false, tappedSide);
         }
     }

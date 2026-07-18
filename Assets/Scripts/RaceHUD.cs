@@ -7,7 +7,7 @@ public class RaceHUD : MonoBehaviour
     public TMP_Text liveTimerText;   // shows running time while racing
     public TMP_Text resultText;      // shows final time + high score after finish
 
-    private const string HighScoreKey = "100mRush_BestTime";
+    public string highScoreKey = "100mRush_BestTime"; // CHANGED — now editable per instance in the Inspector
 
     void OnEnable()
     {
@@ -29,12 +29,12 @@ public class RaceHUD : MonoBehaviour
 
     void HandleRaceFinished(float finalTime)
     {
-        float bestTime = PlayerPrefs.GetFloat(HighScoreKey, float.MaxValue);
+        float bestTime = PlayerPrefs.GetFloat(highScoreKey, float.MaxValue); // CHANGED — uses highScoreKey instead of HighScoreKey
         bool isNewBest = finalTime < bestTime;
 
         if (isNewBest)
         {
-            PlayerPrefs.SetFloat(HighScoreKey, finalTime);
+            PlayerPrefs.SetFloat(highScoreKey, finalTime); // CHANGED
             PlayerPrefs.Save();
             bestTime = finalTime;
         }
