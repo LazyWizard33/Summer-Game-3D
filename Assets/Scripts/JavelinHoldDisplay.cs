@@ -5,6 +5,7 @@ public class JavelinHoldDisplay : MonoBehaviour
     public JavelinController javelinController;
     public GameObject holdButton;
 
+
     void OnEnable()
     {
         javelinController.OnApproachWindowOpen += ShowButton;
