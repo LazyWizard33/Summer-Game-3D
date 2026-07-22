@@ -49,13 +49,7 @@ public class JavelinController : MonoBehaviour
     public event Action OnFoul;
 
 
-    //private CameraFollow cameraFollow;
 
-
-    //void Start()
-    //{
-    //    cameraFollow = Camera.main.GetComponent<CameraFollow>();
-    //}
     void Update()
     {
         if (hasThrown)
@@ -75,11 +69,13 @@ public class JavelinController : MonoBehaviour
             OnApproachWindowOpen?.Invoke();
         }
 
-        //if (inApproachWindow && !isHolding && z >= foulLineZ)
-        //{
-        //    hasThrown = true;
-        //    OnFoul?.Invoke();
-        //}
+        // RESTORED — crossing the foul line before releasing (or even while holding) is an automatic foul
+        if (!hasThrown && z >= foulLineZ)
+        {
+            hasThrown = true;
+            isHolding = false; // cancel any in-progress hold, since it's now invalid
+            OnFoul?.Invoke();
+        }
 
         if (Input.GetKeyDown(KeyCode.Keypad5))
             OnHoldButtonDown();
@@ -179,7 +175,6 @@ public class JavelinController : MonoBehaviour
 
         if (cam != null)
         {
-            // Looks for an Empty GameObject named "CameraTarget"
             Transform camTarget = javelin.transform.Find("CameraTarget");
 
             if (camTarget != null)
@@ -195,6 +190,7 @@ public class JavelinController : MonoBehaviour
             startPos.z + distance);
 
         float elapsed = 0f;
+        Vector3 previousPos = startPos; // NEW — tracks last frame's position to compute direction of travel
 
         while (elapsed < flightDuration)
         {
@@ -203,17 +199,24 @@ public class JavelinController : MonoBehaviour
             float t = Mathf.Clamp01(elapsed / flightDuration);
 
             float z = Mathf.Lerp(startPos.z, endPos.z, t);
-
-            // Bigger, smoother arc
             float height = Mathf.Sin(t * Mathf.PI) * flightHeight;
 
-            javelin.transform.position = new Vector3(
+            Vector3 newPos = new Vector3(
                 startPos.x,
                 Mathf.Lerp(startPos.y, endPos.y, t) + height,
                 z);
 
-            float pitch = Mathf.Lerp(20f, -60f, t);
-            javelin.transform.rotation = Quaternion.Euler(pitch, 0f, 0f);
+            javelin.transform.position = newPos;
+
+            // CHANGED — rotate to face the actual direction of movement, instead of hardcoded pitch values
+            Vector3 velocity = newPos - previousPos;
+            if (velocity.sqrMagnitude > 0.0001f)
+            {
+                Quaternion lookRot = Quaternion.LookRotation(velocity.normalized, Vector3.up);
+                javelin.transform.rotation = lookRot * Quaternion.Euler(90f, 0f, 0f); // combines aim direction with the mesh's own 90° "lying flat" correction
+            }
+
+            previousPos = newPos; // NEW
 
             yield return null;
         }
